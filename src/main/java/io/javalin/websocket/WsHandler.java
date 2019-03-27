@@ -10,17 +10,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class WsHandler {
 
-    ConnectHandler connectHandler = null;
-    MessageHandler messageHandler = null;
-    BinaryMessageHandler binaryMessageHandler = null;
-    CloseHandler closeHandler = null;
-    ErrorHandler errorHandler = null;
+    Handler<WsContextOnConnect> connectHandler = null;
+    Handler<WsContextOnMessage> messageHandler = null;
+    Handler<WsContextOnBinaryMessage> binaryMessageHandler = null;
+    Handler<WsContextOnClose> closeHandler = null;
+    Handler<WsContextOnException> errorHandler = null;
 
     /**
      * Add a ConnectHandler to the WsHandler.
      * The handler is called when a WebSocket client connects.
      */
-    public void onConnect(@NotNull ConnectHandler connectHandler) {
+    public void onConnect(@NotNull Handler<WsContextOnConnect> connectHandler) {
         this.connectHandler = connectHandler;
     }
 
@@ -29,16 +29,16 @@ public class WsHandler {
      * The handler is called when a WebSocket client sends
      * a String message.
      */
-    public void onMessage(@NotNull MessageHandler messageHandler) {
+    public void onMessage(@NotNull Handler<WsContextOnMessage> messageHandler) {
         this.messageHandler = messageHandler;
     }
 
     /**
-     * Add a {@link BinaryMessageHandler} to the WsHandler.
+     * Add a {@link Handler<WsContextOnBinaryMessage>} to the WsHandler.
      * The handler is called when a WebSocket client sends
      * a binary message.
      */
-    public void onMessage(@NotNull BinaryMessageHandler binaryMessageHandler) {
+    public void onBinaryMessage(@NotNull Handler<WsContextOnBinaryMessage> binaryMessageHandler) {
         this.binaryMessageHandler = binaryMessageHandler;
     }
 
@@ -49,7 +49,7 @@ public class WsHandler {
      * network issues, only when the client actively closes the
      * connection (or times out).
      */
-    public void onClose(@NotNull CloseHandler closeHandler) {
+    public void onClose(@NotNull Handler<WsContextOnClose> closeHandler) {
         this.closeHandler = closeHandler;
     }
 
@@ -57,7 +57,7 @@ public class WsHandler {
      * Add a errorHandler to the WsHandler.
      * The handler is called when an error is detected.
      */
-    public void onError(@NotNull ErrorHandler errorHandler) {
+    public void onError(@NotNull Handler<WsContextOnException> errorHandler) {
         this.errorHandler = errorHandler;
     }
 
