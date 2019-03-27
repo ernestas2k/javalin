@@ -41,9 +41,9 @@ class WsPathMatcher {
     @OnWebSocketConnect
     fun webSocketConnect(session: Session) {
         findEntry(session)?.let {
-            val wsSession = wrap(session, it)
-            it.handler.connectHandler?.handle(wsSession)
-            wsLogger?.connectHandler?.handle(wsSession)
+            val ctx = OnConnect(wrap(session, it))
+            it.handler.connectHandler?.handle(ctx)
+            wsLogger?.connectHandler?.handle(ctx)
         }
 
     }
@@ -51,36 +51,36 @@ class WsPathMatcher {
     @OnWebSocketMessage
     fun webSocketMessage(session: Session, message: String) {
         findEntry(session)?.let {
-            val wsSession = wrap(session, it)
-            it.handler.messageHandler?.handle(wsSession, message)
-            wsLogger?.messageHandler?.handle(wsSession, message)
+            val ctx = OnMessage(wrap(session, it), message)
+            it.handler.messageHandler?.handle(ctx)
+            wsLogger?.messageHandler?.handle(ctx)
         }
     }
 
     @OnWebSocketMessage
     fun webSocketBinaryMessage(session: Session, buffer: ByteArray, offset: Int, length: Int) {
         findEntry(session)?.let {
-            val wsSession = wrap(session, it)
-            it.handler.binaryMessageHandler?.handle(wsSession, buffer.toTypedArray(), offset, length)
-            wsLogger?.binaryMessageHandler?.handle(wsSession, buffer.toTypedArray(), offset, length)
+            val ctx = OnBinaryMessage(wrap(session, it), buffer.toTypedArray(), offset, length)
+            it.handler.binaryMessageHandler?.handle(ctx)
+            wsLogger?.binaryMessageHandler?.handle(ctx)
         }
     }
 
     @OnWebSocketError
     fun webSocketError(session: Session, throwable: Throwable?) {
         findEntry(session)?.let {
-            val wsSession = wrap(session, it)
-            it.handler.errorHandler?.handle(wsSession, throwable)
-            wsLogger?.errorHandler?.handle(wsSession, throwable)
+            val ctx = OnException(wrap(session, it), throwable)
+            it.handler.errorHandler?.handle(ctx)
+            wsLogger?.errorHandler?.handle(ctx)
         }
     }
 
     @OnWebSocketClose
     fun webSocketClose(session: Session, statusCode: Int, reason: String?) {
         findEntry(session)?.let {
-            val wsSession = wrap(session, it)
-            it.handler.closeHandler?.handle(wsSession, statusCode, reason)
-            wsLogger?.closeHandler?.handle(wsSession, statusCode, reason)
+            val ctx = OnClose(wrap(session, it), statusCode, reason)
+            it.handler.closeHandler?.handle(ctx)
+            wsLogger?.closeHandler?.handle(ctx)
         }
         destroy(session)
     }
@@ -89,10 +89,10 @@ class WsPathMatcher {
 
     fun findEntry(req: UpgradeRequest) = wsEntries.find { it.matches(req.requestURI.path) }
 
-    private fun wrap(session: Session, wsEntry: WsEntry): WsContext {
+    private fun wrap(session: Session, wsEntry: WsEntry): WsContextBase {
         sessionIds.putIfAbsent(session, UUID.randomUUID().toString())
         sessionPathParams.putIfAbsent(session, wsEntry.extractPathParams(session.upgradeRequest.requestURI.path))
-        return WsContext(sessionIds[session]!!, session, sessionPathParams[session]!!, wsEntry.path)
+        return WsContextBase(sessionIds[session]!!, session, sessionPathParams[session]!!, wsEntry.path)
     }
 
     private fun destroy(session: Session) {

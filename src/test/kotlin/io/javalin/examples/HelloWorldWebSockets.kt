@@ -18,12 +18,12 @@ fun main(args: Array<String>) {
                 println("Connection established")
                 ctx.send("[MESSAGE FROM SERVER] Connection established")
             }
-            ws.onMessage { ctx, message ->
-                println("Received: " + message)
-                ctx.send("[MESSAGE FROM SERVER] Echo: " + message)
+            ws.onMessage { ctx ->
+                println("Received: " + ctx.message())
+                ctx.send("[MESSAGE FROM SERVER] Echo: " + ctx.message())
             }
-            ws.onClose { ctx, statusCode, reason -> println("Closed") }
-            ws.onError { ctx, throwable -> println("Errored") }
+            ws.onClose { ctx -> println("Closed") }
+            ws.onError { ctx -> println("Errored") }
         }
         get("/") { ctx ->
             ctx.html("""<h1>WebSocket example</h1>

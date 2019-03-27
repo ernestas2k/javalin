@@ -9,6 +9,7 @@ package io.javalin.websocket;
 import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
-public interface ConnectHandler {
-    void handle(@NotNull WsContext ctx) throws Exception;
+public interface Handler<T extends WsContext> {
+    void handle(@NotNull T ctx) throws Exception;
 }
+

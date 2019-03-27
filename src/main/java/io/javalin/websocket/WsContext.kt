@@ -7,37 +7,46 @@
 package io.javalin.websocket
 
 import io.javalin.core.util.ContextUtil
-import org.eclipse.jetty.websocket.api.*
-import org.eclipse.jetty.websocket.common.WebSocketSession
+import io.javalin.json.JavalinJson
+import org.eclipse.jetty.websocket.api.Session
 import java.nio.ByteBuffer
 
-/**
- * The [WsContext] class holds Jetty's [Session] and provides (convenient) delegate methods.
- * It adds functionality similar to the API found in [io.javalin.Context].
- * It also adds a [send] method, which calls [RemoteEndpoint.sendString] on [Session.getRemote]
- */
-class WsContext(val sessionId: String, session: Session, private var pathParamMap: Map<String, String>, private val matchedPath: String) {
-
-    private val webSocketSession = session as WebSocketSession
-
-    fun session() = webSocketSession
-    fun send(message: String) = webSocketSession.remote.sendString(message)
-    fun send(message: ByteBuffer) = webSocketSession.remote.sendBytes(message)
-    fun queryString(): String? = webSocketSession.upgradeRequest!!.queryString
-    @JvmOverloads
-    fun queryParam(queryParam: String, default: String? = null): String? = queryParams(queryParam).firstOrNull() ?: default
+interface WsContext {
+    fun session(): Session
+    fun send(message: String) = session().remote.sendString(message)
+    fun send(message: ByteBuffer) = session().remote.sendBytes(message)
+    fun queryString(): String? = session().upgradeRequest!!.queryString
+    fun queryParam(queryParam: String): String? = queryParam(queryParam, default = null)
+    fun queryParam(queryParam: String, default: String? = null): String? = queryParams(queryParam).firstOrNull()
+            ?: default
 
     fun queryParams(queryParam: String): List<String> = queryParamMap()[queryParam] ?: emptyList()
     fun queryParamMap(): Map<String, List<String>> = ContextUtil.splitKeyValueStringAndGroupByKey(queryString() ?: "")
     fun mapQueryParams(vararg keys: String): List<String>? = ContextUtil.mapKeysOrReturnNullIfAnyNulls(keys) { queryParam(it) }
     fun anyQueryParamNull(vararg keys: String): Boolean = keys.any { queryParam(it) == null }
-    fun pathParam(pathParam: String): String = ContextUtil.pathParamOrThrow(pathParamMap, pathParam, matchedPath)
-    fun pathParamMap(): Map<String, String> = pathParamMap
-    fun host(): String? = webSocketSession.upgradeRequest.host
-    fun header(header: String): String? = webSocketSession.upgradeRequest.getHeader(header)
-    fun headerMap(): Map<String, String> = webSocketSession.upgradeRequest.headers.keys.map { it to webSocketSession.upgradeRequest.getHeader(it) }.toMap()
-    fun matchedPath() = matchedPath
+    fun pathParam(pathParam: String): String = ContextUtil.pathParamOrThrow(pathParamMap(), pathParam, matchedPath())
+    fun pathParamMap(): Map<String, String>
+    fun host(): String? = session().upgradeRequest.host
+    fun header(header: String): String? = session().upgradeRequest.getHeader(header)
+    fun headerMap(): Map<String, String> = session().upgradeRequest.headers.keys.map { it to session().upgradeRequest.getHeader(it) }.toMap()
+    fun matchedPath(): String
 
-    override fun equals(other: Any?) = webSocketSession == (other as WsContext).webSocketSession
-    override fun hashCode() = webSocketSession.hashCode()
 }
+
+class WsContextBase(val sessionId: String, private val session: Session, private val pathParamMap: Map<String, String>, private val matchedPath: String) : WsContext {
+    override fun session() = session
+    override fun pathParamMap(): Map<String, String> = pathParamMap
+    override fun matchedPath() = matchedPath
+
+    override fun equals(other: Any?) = session() == (other as WsContext).session()
+    override fun hashCode() = session().hashCode()
+}
+
+class OnConnect(ctx: WsContext) : WsContext by ctx
+class OnMessage(ctx: WsContext, private val message: String?) : WsContext by ctx {
+    fun message(): String? = message
+    inline fun <reified T : Any> message(): T? = if (message() == null) null else JavalinJson.fromJson(message()!!, T::class.java)
+}
+class OnBinaryMessage(ctx: WsContext, val buffer: Array<Byte>, val offset: Int, val length: Int) : WsContext by ctx
+class OnException(ctx: WsContext, val error: Throwable?) : WsContext by ctx
+class OnClose(ctx: WsContext, val statusCode: Int, val reason: String?) : WsContext by ctx

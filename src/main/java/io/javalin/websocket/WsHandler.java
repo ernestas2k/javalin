@@ -10,54 +10,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class WsHandler {
 
-    ConnectHandler connectHandler = null;
-    MessageHandler messageHandler = null;
-    BinaryMessageHandler binaryMessageHandler = null;
-    CloseHandler closeHandler = null;
-    ErrorHandler errorHandler = null;
+    Handler<OnConnect> connectHandler = null;
+    Handler<OnMessage> messageHandler = null;
+    Handler<OnBinaryMessage> binaryMessageHandler = null;
+    Handler<OnClose> closeHandler = null;
+    Handler<OnException> errorHandler = null;
 
-    /**
-     * Add a ConnectHandler to the WsHandler.
-     * The handler is called when a WebSocket client connects.
-     */
-    public void onConnect(@NotNull ConnectHandler connectHandler) {
+    public void onConnect(@NotNull Handler<OnConnect> connectHandler) {
         this.connectHandler = connectHandler;
     }
 
-    /**
-     * Add a MessageHandler to the WsHandler.
-     * The handler is called when a WebSocket client sends
-     * a String message.
-     */
-    public void onMessage(@NotNull MessageHandler messageHandler) {
+    public void onMessage(@NotNull Handler<OnMessage> messageHandler) {
         this.messageHandler = messageHandler;
     }
 
-    /**
-     * Add a {@link BinaryMessageHandler} to the WsHandler.
-     * The handler is called when a WebSocket client sends
-     * a binary message.
-     */
-    public void onMessage(@NotNull BinaryMessageHandler binaryMessageHandler) {
+    public void onBinaryMessage(@NotNull Handler<OnBinaryMessage> binaryMessageHandler) {
         this.binaryMessageHandler = binaryMessageHandler;
     }
 
-    /**
-     * Add a CloseHandler to the WsHandler.
-     * The handler is called when a WebSocket client closes
-     * the connection. The handler is not called in case of
-     * network issues, only when the client actively closes the
-     * connection (or times out).
-     */
-    public void onClose(@NotNull CloseHandler closeHandler) {
+    public void onClose(@NotNull Handler<OnClose> closeHandler) {
         this.closeHandler = closeHandler;
     }
 
-    /**
-     * Add a errorHandler to the WsHandler.
-     * The handler is called when an error is detected.
-     */
-    public void onError(@NotNull ErrorHandler errorHandler) {
+    public void onError(@NotNull Handler<OnException> errorHandler) {
         this.errorHandler = errorHandler;
     }
 

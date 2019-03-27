@@ -18,15 +18,15 @@ public class HelloWorldWebSockets {
                 System.out.println("Connected");
                 ctx.send("[MESSAGE FROM SERVER] Connection established");
             });
-            ws.onMessage((ctx, message) -> {
-                System.out.println("Received: " + message);
-                ctx.send("[MESSAGE FROM SERVER] Echo: " + message);
+            ws.onMessage(ctx -> {
+                System.out.println("Received: " + ctx.message());
+                ctx.send("[MESSAGE FROM SERVER] Echo: " + ctx.message());
             });
-            ws.onClose((ctx, statusCode, reason) -> {
-                System.out.println("Closed");
+            ws.onClose(ctx -> {
+                System.out.println("Closed, reason: " + ctx.getReason());
             });
-            ws.onError((ctx, throwable) -> {
-                System.out.println("Errored");
+            ws.onError(ctx -> {
+                System.out.println("Errored: " + ctx.getError());
             });
         });
         app.get("/", ctx -> {

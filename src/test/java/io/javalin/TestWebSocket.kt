@@ -31,7 +31,7 @@ class TestWebSocket {
     private val caseSensitiveJavalin = Javalin.create().enableCaseSensitiveUrls()
     private val javalinWithWsLogger = Javalin.create().wsLogger { ws ->
         ws.onConnect { ctx -> log.add(ctx.pathParam("param") + " connected") }
-        ws.onClose { ctx, _, _ -> log.add(ctx.pathParam("param") + " disconnected") }
+        ws.onClose { ctx -> log.add(ctx.pathParam("param") + " disconnected") }
     }
     private var log = mutableListOf<String>()
 
@@ -44,14 +44,14 @@ class TestWebSocket {
     fun `each connection receives a unique id`() = TestUtil.test(contextPathJavalin) { app, _ ->
         app.ws("/test-websocket-1") { ws ->
             ws.onConnect { ctx -> log.add(ctx.sessionId) }
-            ws.onMessage { ctx, _ -> log.add(ctx.sessionId) }
-            ws.onClose { ctx, _, _ -> log.add(ctx.sessionId) }
+            ws.onMessage { ctx -> log.add(ctx.sessionId) }
+            ws.onClose { ctx -> log.add(ctx.sessionId) }
         }
         app.routes {
             ws("/test-websocket-2") { ws ->
                 ws.onConnect { ctx -> log.add(ctx.sessionId) }
-                ws.onMessage { ctx, _ -> log.add(ctx.sessionId) }
-                ws.onClose { ctx, _, _ -> log.add(ctx.sessionId) }
+                ws.onMessage { ctx -> log.add(ctx.sessionId) }
+                ws.onClose { ctx -> log.add(ctx.sessionId) }
             }
         }
 
@@ -89,12 +89,12 @@ class TestWebSocket {
                 log.add(userUsernameMap[ctx].toString() + " sent '" + message + "' to server")
                 userUsernameMap.forEach { client, _ -> doAndSleep { client.send("Server sent '" + message + "' to " + userUsernameMap[client]) } }
             }
-            ws.onClose { ctx, _, _ -> log.add(userUsernameMap[ctx].toString() + " disconnected") }
+            ws.onClose { ctx -> log.add(userUsernameMap[ctx].toString() + " disconnected") }
         }
         app.routes {
             ws("/test-websocket-2") { ws ->
                 ws.onConnect { _ -> log.add("Connected to other endpoint") }
-                ws.onClose { _, _, _ -> log.add("Disconnected from other endpoint") }
+                ws.onClose { _ -> log.add("Disconnected from other endpoint") }
             }
         }
 
@@ -176,7 +176,7 @@ class TestWebSocket {
     fun `headers and host are available in session`() = TestUtil.test { app, _ ->
         app.ws("websocket") { ws ->
             ws.onConnect { ctx -> log.add("Header: " + ctx.header("Test")!!) }
-            ws.onClose { ctx, _, _ -> log.add("Closed connection from: " + ctx.host()!!) }
+            ws.onClose { ctx -> log.add("Closed connection from: " + ctx.host()!!) }
         }
         connectAndDisconnect(TestClient(URI.create("ws://localhost:" + app.port() + "/websocket"), mapOf("Test" to "HeaderParameter")))
         assertThat(log).containsExactlyInAnyOrder("Header: HeaderParameter", "Closed connection from: localhost")
