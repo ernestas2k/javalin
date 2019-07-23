@@ -21,7 +21,6 @@ import io.javalin.core.security.AccessManager;
 import io.javalin.core.security.Role;
 import io.javalin.core.util.Util;
 import io.javalin.http.Context;
-import io.javalin.http.ErrorHandler;
 import io.javalin.http.ErrorMapperKt;
 import io.javalin.http.ExceptionHandler;
 import io.javalin.http.Handler;
@@ -252,7 +251,7 @@ public class Javalin {
      *
      * @see <a href="https://javalin.io/documentation#error-mapping">Error mapping in docs</a>
      */
-    public Javalin error(int statusCode, @NotNull ErrorHandler errorHandler) {
+    public Javalin error(int statusCode, @NotNull Handler errorHandler) {
         servlet.getErrorMapper().getErrorHandlerMap().put(statusCode, errorHandler);
         return this;
     }
@@ -263,7 +262,7 @@ public class Javalin {
      *
      * @see <a href="https://javalin.io/documentation#error-mapping">Error mapping in docs</a>
      */
-    public Javalin error(int statusCode, @NotNull String contentType, @NotNull ErrorHandler errorHandler) {
+    public Javalin error(int statusCode, @NotNull String contentType, @NotNull Handler errorHandler) {
         return error(statusCode, ErrorMapperKt.contentTypeWrap(contentType, errorHandler));
     }
 
